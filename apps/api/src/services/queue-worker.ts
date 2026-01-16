@@ -109,10 +109,19 @@ async function finishCrawlIfNeeded(job: Job & { id: string }, sc: StoredCrawl) {
         "crawl:" + job.data.crawl_id + ":visited_unique",
       ));
 
-      const lastUrls: string[] = ((await supabase_service.rpc("diff_get_last_crawl_urls", {
-        i_team_id: job.data.team_id,
-        i_url: sc.originUrl!,
-      })).data ?? []).map(x => x.url);
+      // Check if Supabase is configured before calling RPC
+      let lastUrls: string[] = [];
+      try {
+        const result = await supabase_service.rpc("diff_get_last_crawl_urls", {
+          i_team_id: job.data.team_id,
+          i_url: sc.originUrl!,
+        });
+        lastUrls = (result.data ?? []).map(x => x.url);
+      } catch (error) {
+        // If Supabase is not configured, use empty array
+        _logger.warn("Supabase not configured, skipping diff_get_last_crawl_urls call");
+        lastUrls = [];
+      }
 
       const lastUrlsSet = new Set(lastUrls);
 

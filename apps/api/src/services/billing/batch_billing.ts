@@ -280,6 +280,13 @@ async function supaBillTeam(
   
   _logger.info(`Batch billing team ${team_id} for ${credits} credits`);
 
+  // Check if Supabase is configured before performing billing operation
+  const useDbAuthentication = process.env.USE_DB_AUTHENTICATION === "true";
+  if (!useDbAuthentication) {
+    _logger.info("Supabase not configured, skipping billing operation");
+    return { success: true, message: "Billing skipped - Supabase not configured" };
+  }
+
   // Perform the actual database operation
   const { data, error } = await supabase_service.rpc("bill_team_4_tally", {
     _team_id: team_id,
